@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoreo de Agua — Comunidad Wayuu de Karazua</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde:    #00C896;
+    --amarillo: #F5A623;
+    --rojo:     #E84040;
+    --azul:     #1A6CF6;
+    --fondo:    #0A0E1A;
+    --card:     #111827;
+    --card2:    #1C2333;
+    --borde:    #1E2D45;
+    --texto:    #E8EDF5;
+    --muted:    #5A6A82;
+    --mono:     'Space Mono', monospace;
+    --sans:     'DM Sans', sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; top:-50%; left:-50%;
+    width:200%; height:200%;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(0,200,150,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(26,108,246,0.06) 0%, transparent 50%);
+    pointer-events:none; z-index:0;
+  }
+
+  /* ===== LOGIN ===== */
+  #login-screen {
+    position: fixed; inset:0; z-index:1000;
+    display: flex; align-items:center; justify-content:center;
+    background: var(--fondo);
+    transition: opacity .5s, transform .5s;
+  }
+
+  #login-screen.oculto {
+    opacity:0; pointer-events:none; transform:scale(1.04);
+  }
+
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--borde);
+    border-radius: 20px;
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .login-box::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:3px;
+    background: linear-gradient(90deg, var(--verde), var(--azul));
+  }
+
+  .login-logo {
+    display:flex; align-items:center; gap:10px;
+    margin-bottom: 2rem;
+  }
+
+  .login-dot {
+    width:12px; height:12px; border-radius:50%;
+    background:var(--verde); box-shadow:0 0 10px var(--verde);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%    { opacity:.6; transform:scale(1.3); }
+  }
+
+  .login-titulo {
+    font-family: var(--mono); font-size:13px;
+    letter-spacing:2px; text-transform:uppercase;
+  }
+
+  .login-sub {
+    font-size:11px; color:var(--muted);
+    font-family:var(--mono);
+  }
+
+  .login-h1 {
+    font-size:1.6rem; font-weight:600;
+    margin-bottom:.4rem;
+  }
+
+  .login-desc {
+    font-size:13px; color:var(--muted);
+    margin-bottom:2rem;
+  }
+
+  .input-group {
+    margin-bottom:1rem;
+  }
+
+  .input-group label {
+    display:block; font-size:11px;
+    font-family:var(--mono); letter-spacing:1px;
+    text-transform:uppercase; color:var(--muted);
+    margin-bottom:6px;
+  }
+
+  .input-group input {
+    width:100%; padding:12px 14px;
+    background:var(--card2); border:1px solid var(--borde);
+    border-radius:10px; color:var(--texto);
+    font-family:var(--sans); font-size:14px;
+    outline:none; transition:border-color .2s;
+  }
+
+  .input-group input:focus {
+    border-color: rgba(26,108,246,0.6);
+  }
+
+  .login-btn {
+    width:100%; padding:13px;
+    background:var(--azul); color:#fff; border:none;
+    border-radius:10px; font-family:var(--sans);
+    font-size:14px; font-weight:500;
+    cursor:pointer; transition:opacity .2s, transform .1s;
+    margin-top:.5rem;
+  }
+
+  .login-btn:hover  { opacity:.9; }
+  .login-btn:active { transform:scale(.98); }
+
+  .login-error {
+    background: rgba(232,64,64,0.12);
+    border: 1px solid rgba(232,64,64,0.3);
+    color: var(--rojo); border-radius:8px;
+    padding:10px 14px; font-size:13px;
+    margin-top:1rem; display:none;
+  }
+
+  .login-error.visible { display:block; }
+
+  /* ===== HEADER ===== */
+  header {
+    position:sticky; top:0; z-index:100;
+    background:rgba(10,14,26,0.92);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--borde);
+    padding:0 2rem; height:64px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+
+  .header-left { display:flex; align-items:center; gap:12px; }
+
+  .header-logo-dot {
+    width:10px; height:10px; border-radius:50%;
+    background:var(--verde); box-shadow:0 0 8px var(--verde);
+    animation:pulse-dot 2s ease-in-out infinite;
+  }
+
+  .header-title {
+    font-family:var(--mono); font-size:13px;
+    letter-spacing:2px; text-transform:uppercase;
+  }
+
+  .header-sub { font-size:11px; color:var(--muted); font-family:var(--mono); }
+
+  .header-right { display:flex; align-items:center; gap:12px; }
+
+  .user-badge {
+    display:flex; align-items:center; gap:8px;
+    background:var(--card2); border:1px solid var(--borde);
+    border-radius:8px; padding:5px 12px; font-size:13px;
+  }
+
+  .user-avatar {
+    width:24px; height:24px; border-radius:50%;
+    background:var(--azul); display:flex;
+    align-items:center; justify-content:center;
+    font-size:11px; font-weight:700;
+  }
+
+  .device-select {
+    background:var(--card2); border:1px solid var(--borde);
+    color:var(--texto); padding:6px 12px; border-radius:8px;
+    font-family:var(--sans); font-size:13px;
+    cursor:pointer; outline:none;
+  }
+
+  #sync-btn {
+    background:var(--azul); color:#fff; border:none;
+    padding:7px 16px; border-radius:8px;
+    font-family:var(--sans); font-size:13px;
+    cursor:pointer; transition:opacity .2s;
+  }
+  #sync-btn:hover { opacity:.85; }
+
+  #logout-btn {
+    background:transparent; color:var(--muted);
+    border:1px solid var(--borde); padding:7px 14px;
+    border-radius:8px; font-family:var(--sans);
+    font-size:13px; cursor:pointer; transition:all .2s;
+  }
+  #logout-btn:hover { color:var(--rojo); border-color:rgba(232,64,64,0.4); }
+
+  /* ===== MAIN ===== */
+  main {
+    position:relative; z-index:1;
+    max-width:1280px; margin:0 auto; padding:2rem;
+  }
+
+  .estado-card {
+    border-radius:16px; padding:2rem 2.5rem;
+    margin-bottom:1.5rem; border:1px solid var(--borde);
+    display:flex; align-items:center;
+    justify-content:space-between; flex-wrap:wrap; gap:1rem;
+    transition:border-color .4s; position:relative; overflow:hidden;
+  }
+
+  .estado-card::before {
+    content:''; position:absolute; inset:0;
+    opacity:.06; border-radius:16px; transition:background .4s;
+  }
+
+  .estado-card.verde    { border-color:rgba(0,200,150,0.4); }
+  .estado-card.verde::before    { background:var(--verde); }
+  .estado-card.amarillo { border-color:rgba(245,166,35,0.4); }
+  .estado-card.amarillo::before { background:var(--amarillo); }
+  .estado-card.rojo     { border-color:rgba(232,64,64,0.4); }
+  .estado-card.rojo::before     { background:var(--rojo); }
+
+  .estado-label {
+    font-size:11px; font-family:var(--mono);
+    letter-spacing:3px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:6px;
+  }
+
+  .estado-valor { font-size:2.8rem; font-weight:600; line-height:1; }
+  .estado-card.verde    .estado-valor { color:var(--verde); }
+  .estado-card.amarillo .estado-valor { color:var(--amarillo); }
+  .estado-card.rojo     .estado-valor { color:var(--rojo); }
+
+  .estado-hora { font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:8px; }
+
+  .nivel-icon {
+    width:64px; height:64px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px;
+  }
+
+  .verde    .nivel-icon { background:rgba(0,200,150,.15);  box-shadow:0 0 24px rgba(0,200,150,.2); }
+  .amarillo .nivel-icon { background:rgba(245,166,35,.15); box-shadow:0 0 24px rgba(245,166,35,.2); }
+  .rojo     .nivel-icon { background:rgba(232,64,64,.15);  box-shadow:0 0 24px rgba(232,64,64,.2); }
+
+  .metrics-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    gap:1rem; margin-bottom:1.5rem;
+  }
+
+  .metric-card {
+    background:var(--card); border:1px solid var(--borde);
+    border-radius:14px; padding:1.4rem 1.6rem;
+    position:relative; overflow:hidden;
+    transition:border-color .3s, transform .2s;
+  }
+
+  .metric-card:hover { border-color:rgba(255,255,255,0.12); transform:translateY(-2px); }
+
+  .metric-card::after {
+    content:''; position:absolute; top:0; left:0; right:0;
+    height:2px; border-radius:14px 14px 0 0;
+  }
+
+  .metric-card.m-temp::after { background:linear-gradient(90deg,#FF6B6B,#FF8E53); }
+  .metric-card.m-turb::after { background:linear-gradient(90deg,#4ECDC4,#44A8B3); }
+  .metric-card.m-cond::after { background:linear-gradient(90deg,#A78BFA,#818CF8); }
+  .metric-card.m-ph::after   { background:linear-gradient(90deg,#F5A623,#F9D423); }
+
+  .metric-label {
+    font-size:11px; font-family:var(--mono);
+    letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:10px;
+  }
+
+  .metric-valor { font-family:var(--mono); font-size:2.2rem; font-weight:700; line-height:1; }
+  .m-temp .metric-valor { color:#FF8E53; }
+  .m-turb .metric-valor { color:#4ECDC4; }
+  .m-cond .metric-valor { color:#A78BFA; }
+  .m-ph   .metric-valor { color:#F5A623; }
+
+  .metric-unit { font-size:14px; color:var(--muted); font-family:var(--sans); margin-left:4px; }
+
+  .metric-rango {
+    margin-top:10px; font-size:12px; color:var(--muted);
+    display:flex; align-items:center; gap:6px;
+  }
+
+  .rango-dot { width:7px; height:7px; border-radius:50%; display:inline-block; }
+
+  .metric-bar { margin-top:12px; height:4px; background:var(--borde); border-radius:4px; overflow:hidden; }
+  .metric-bar-fill { height:100%; border-radius:4px; transition:width 1s ease; }
+  .m-temp .metric-bar-fill { background:linear-gradient(90deg,#FF6B6B,#FF8E53); }
+  .m-turb .metric-bar-fill { background:linear-gradient(90deg,#4ECDC4,#44A8B3); }
+  .m-cond .metric-bar-fill { background:linear-gradient(90deg,#A78BFA,#818CF8); }
+  .m-ph   .metric-bar-fill { background:linear-gradient(90deg,#F5A623,#F9D423); }
+
+  .bottom-grid { display:grid; grid-template-columns:1fr 320px; gap:1rem; }
+  @media (max-width:900px) { .bottom-grid { grid-template-columns:1fr; } }
+
+  .chart-card {
+    background:var(--card); border:1px solid var(--borde);
+    border-radius:14px; padding:1.6rem;
+  }
+
+  .card-title {
+    font-size:12px; font-family:var(--mono);
+    letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:1.2rem;
+  }
+
+  .chart-tabs { display:flex; gap:6px; margin-bottom:1rem; flex-wrap:wrap; }
+
+  .chart-tab {
+    padding:5px 12px; border-radius:6px; font-size:12px;
+    font-family:var(--mono); cursor:pointer;
+    border:1px solid var(--borde); background:transparent;
+    color:var(--muted); transition:all .2s;
+  }
+
+  .chart-tab.active {
+    background:var(--card2); color:var(--texto);
+    border-color:rgba(255,255,255,0.15);
+  }
+
+  canvas { width:100% !important; }
+
+  .side-panel { display:flex; flex-direction:column; gap:1rem; }
+
+  .side-card {
+    background:var(--card); border:1px solid var(--borde);
+    border-radius:14px; padding:1.4rem;
+  }
+
+  .controles { display:flex; flex-direction:column; gap:8px; }
+
+  .ctrl-btn {
+    width:100%; padding:12px 16px; border-radius:10px;
+    border:1px solid var(--borde); background:var(--card2);
+    color:var(--texto); font-family:var(--sans); font-size:13px;
+    cursor:pointer; text-align:left;
+    display:flex; align-items:center; gap:10px; transition:all .2s;
+  }
+
+  .ctrl-btn:hover { background:#222d40; border-color:rgba(255,255,255,0.12); }
+  .ctrl-btn.azul    { border-color:rgba(26,108,246,0.4);  color:#6BA4FF; }
+  .ctrl-btn.naranja { border-color:rgba(245,166,35,0.4);  color:#F5A623; }
+  .ctrl-btn.verde   { border-color:rgba(0,200,150,0.4);   color:var(--verde); }
+  .ctrl-btn.rojo-c  { border-color:rgba(232,64,64,0.4);   color:var(--rojo); }
+
+  .ctrl-icon {
+    width:32px; height:32px; border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:14px; flex-shrink:0;
+  }
+
+  .azul    .ctrl-icon { background:rgba(26,108,246,0.15); }
+  .naranja .ctrl-icon { background:rgba(245,166,35,0.15); }
+  .verde   .ctrl-icon { background:rgba(0,200,150,0.15); }
+  .ctrl-btn.rojo-c .ctrl-icon { background:rgba(232,64,64,0.15); }
+
+  .alert-list { display:flex; flex-direction:column; gap:8px; }
+
+  .alert-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px; background:var(--card2);
+    border-radius:8px; font-size:12px;
+  }
+
+  .alert-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .alert-dot.verde    { background:var(--verde); }
+  .alert-dot.amarillo { background:var(--amarillo); }
+  .alert-dot.rojo     { background:var(--rojo); }
+
+  .alert-info { flex:1; }
+  .alert-msg  { color:var(--texto); font-weight:500; }
+  .alert-hora { color:var(--muted); margin-top:2px; font-family:var(--mono); font-size:10px; }
+
+  .conn-row {
+    display:flex; align-items:center;
+    justify-content:space-between;
+    padding:8px 0; border-bottom:1px solid var(--borde); font-size:13px;
+  }
+  .conn-row:last-child { border-bottom:none; }
+  .conn-val { font-family:var(--mono); font-size:12px; color:var(--muted); }
+
+  .loader {
+    display:inline-block; width:14px; height:14px;
+    border:2px solid var(--borde); border-top-color:var(--azul);
+    border-radius:50%; animation:spin .8s linear infinite;
+    vertical-align:middle; margin-left:6px;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  #toast {
+    position:fixed; bottom:24px; right:24px;
+    background:var(--card2); border:1px solid var(--borde);
+    color:var(--texto); padding:12px 20px;
+    border-radius:10px; font-size:13px; z-index:9999;
+    opacity:0; transform:translateY(10px);
+    transition:all .3s; pointer-events:none;
+  }
+  #toast.show { opacity:1; transform:translateY(0); }
+
+  @media (max-width:640px) {
+    main { padding:1rem; }
+    .estado-valor { font-size:2rem; }
+    .metric-valor { font-size:1.8rem; }
+    header { padding:0 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-dot"></div>
+      <div>
+        <div class="login-titulo">Monitoreo de Agua</div>
+        <div class="login-sub">Comunidad Wayuu de Karazua</div>
+      </div>
+    </div>
+    <div class="login-h1">Iniciar sesión</div>
+    <div class="login-desc">Ingresa tus credenciales para acceder al sistema</div>
+
+    <div class="input-group">
+      <label>Usuario</label>
+      <input type="text" id="inp-user" placeholder="admin" autocomplete="username"/>
+    </div>
+    <div class="input-group">
+      <label>Contraseña</label>
+      <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') intentarLogin()"/>
+    </div>
+
+    <button class="login-btn" onclick="intentarLogin()">Ingresar</button>
+    <div class="login-error" id="login-error">Usuario o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-left">
+    <div class="header-logo-dot"></div>
+    <div>
+      <div class="header-title">Monitoreo de Agua</div>
+      <div class="header-sub">Comunidad Wayuu de Karazua</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="user-badge">
+      <div class="user-avatar" id="user-avatar">A</div>
+      <span id="user-nombre">admin</span>
+    </div>
+    <select class="device-select" id="device-select" onchange="cambiarDevice(this.value)">
+      <option value="">Cargando...</option>
+    </select>
+    <button id="sync-btn" onclick="sincronizar()">⟳ Sincronizar</button>
+    <button id="logout-btn" onclick="cerrarSesion()">Salir</button>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main>
+
+  <div class="estado-card verde" id="estado-card">
+    <div>
+      <div class="estado-label">Estado actual</div>
+      <div class="estado-valor" id="estado-texto">— — —</div>
+      <div class="estado-hora" id="estado-hora">Esperando datos...</div>
+    </div>
+    <div class="nivel-icon" id="nivel-icon">💧</div>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card m-temp">
+      <div class="metric-label">Temperatura</div>
+      <div class="metric-valor" id="val-temp">—<span class="metric-unit">°C</span></div>
+      <div class="metric-rango">
+        <span class="rango-dot" id="dot-temp" style="background:var(--muted)"></span>
+        <span id="rango-temp">Sin datos</span>
+      </div>
+      <div class="metric-bar"><div class="metric-bar-fill" id="bar-temp" style="width:0%"></div></div>
+    </div>
+    <div class="metric-card m-turb">
+      <div class="metric-label">Turbidez</div>
+      <div class="metric-valor" id="val-turb">—<span class="metric-unit">NTU</span></div>
+      <div class="metric-rango">
+        <span class="rango-dot" id="dot-turb" style="background:var(--muted)"></span>
+        <span id="rango-turb">Sin datos</span>
+      </div>
+      <div class="metric-bar"><div class="metric-bar-fill" id="bar-turb" style="width:0%"></div></div>
+    </div>
+    <div class="metric-card m-cond">
+      <div class="metric-label">Conductividad</div>
+      <div class="metric-valor" id="val-cond">—<span class="metric-unit">CM</span></div>
+      <div class="metric-rango">
+        <span class="rango-dot" id="dot-cond" style="background:var(--muted)"></span>
+        <span id="rango-cond">Sin datos</span>
+      </div>
+      <div class="metric-bar"><div class="metric-bar-fill" id="bar-cond" style="width:0%"></div></div>
+    </div>
+    <div class="metric-card m-ph">
+      <div class="metric-label">pH</div>
+      <div class="metric-valor" id="val-ph">—<span class="metric-unit">pH</span></div>
+      <div class="metric-rango">
+        <span class="rango-dot" id="dot-ph" style="background:var(--muted)"></span>
+        <span id="rango-ph">Sin datos</span>
+      </div>
+      <div class="metric-bar"><div class="metric-bar-fill" id="bar-ph" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="bottom-grid">
+    <div class="chart-card">
+      <div class="card-title">Historial de lecturas</div>
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="cambiarMetrica('temperatura',this)">Temperatura</button>
+        <button class="chart-tab" onclick="cambiarMetrica('turbidez',this)">Turbidez</button>
+        <button class="chart-tab" onclick="cambiarMetrica('conductividad',this)">Conductividad</button>
+        <button class="chart-tab" onclick="cambiarMetrica('ph',this)">pH</button>
+      </div>
+      <canvas id="chart" height="220"></canvas>
+    </div>
+
+    <div class="side-panel">
+      <div class="side-card">
+        <div class="card-title">Controles</div>
+        <div class="controles">
+          <button class="ctrl-btn azul"    onclick="enviarComando('SINCRONIZAR')">
+            <div class="ctrl-icon">⟳</div>Sincronizar dispositivo
+          </button>
+          <button class="ctrl-btn naranja" onclick="enviarComando('ACTIVAR_ALARMA')">
+            <div class="ctrl-icon">🔔</div>Activar alarma
+          </button>
+          <button class="ctrl-btn verde"   onclick="enviarComando('ENCENDER_FILTRADO')">
+            <div class="ctrl-icon">💧</div>Encender filtrado
+          </button>
+          <button class="ctrl-btn rojo-c"  onclick="enviarComando('APAGAR_FILTRADO')">
+            <div class="ctrl-icon">⏹</div>Apagar filtrado
+          </button>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="card-title">Alertas recientes</div>
+        <div class="alert-list" id="alert-list">
+          <div style="color:var(--muted);font-size:12px">Cargando alertas...</div>
+        </div>
+      </div>
+
+      <div class="side-card">
+        <div class="card-title">Dispositivo</div>
+        <div class="conn-row"><span>Nombre</span>    <span class="conn-val" id="info-nombre">—</span></div>
+        <div class="conn-row"><span>Ubicación</span> <span class="conn-val" id="info-ubicacion">—</span></div>
+        <div class="conn-row"><span>MAC</span>       <span class="conn-val" id="info-mac">—</span></div>
+        <div class="conn-row"><span>Estado</span>    <span class="conn-val" id="info-activo">—</span></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const API = '';
+let deviceId      = null;
+let chartInstance = null;
+let metricaActual = 'temperatura';
+let historial     = [];
+
+// ===================================================
+//   LOGIN
+// ===================================================
+const USUARIOS = {
+  'admin': 'admin123',
+  'wayuu': 'agua2024',
+};
+
+function intentarLogin() {
+  const user = document.getElementById('inp-user').value.trim();
+  const pass = document.getElementById('inp-pass').value;
+  const err  = document.getElementById('login-error');
+
+  if (USUARIOS[user] && USUARIOS[user] === pass) {
+    err.classList.remove('visible');
+    sessionStorage.setItem('usuario', user);
+    document.getElementById('login-screen').classList.add('oculto');
+    document.getElementById('user-nombre').textContent = user;
+    document.getElementById('user-avatar').textContent = user[0].toUpperCase();
+    initChart();
+    cargarDevices();
+  } else {
+    err.classList.add('visible');
+    document.getElementById('inp-pass').value = '';
+    document.getElementById('inp-pass').focus();
+  }
+}
+
+function cerrarSesion() {
+  sessionStorage.removeItem('usuario');
+  document.getElementById('login-screen').classList.remove('oculto');
+  document.getElementById('inp-user').value = '';
+  document.getElementById('inp-pass').value = '';
+}
+
+// Verificar si ya hay sesión activa
+window.addEventListener('load', () => {
+  const u = sessionStorage.getItem('usuario');
+  if (u) {
+    document.getElementById('login-screen').classList.add('oculto');
+    document.getElementById('user-nombre').textContent = u;
+    document.getElementById('user-avatar').textContent = u[0].toUpperCase();
+    initChart();
+    cargarDevices();
+  }
+});
+
+// ===================================================
+//   GRÁFICA
+// ===================================================
+function initChart() {
+  const ctx = document.getElementById('chart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Temperatura', data: [],
+        borderColor: '#FF8E53',
+        backgroundColor: 'rgba(255,142,83,0.07)',
+        borderWidth: 2, pointRadius: 3,
+        pointBackgroundColor: '#FF8E53',
+        tension: 0.4, fill: true,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks:{ color:'#5A6A82', font:{family:'Space Mono',size:10} }, grid:{color:'rgba(255,255,255,0.04)'} },
+        y: { ticks:{ color:'#5A6A82', font:{family:'Space Mono',size:10} }, grid:{color:'rgba(255,255,255,0.04)'} }
+      }
+    }
+  });
+}
+
+const COLORES = {
+  temperatura:   { line:'#FF8E53', bg:'rgba(255,142,83,0.07)' },
+  turbidez:      { line:'#4ECDC4', bg:'rgba(78,205,196,0.07)' },
+  conductividad: { line:'#A78BFA', bg:'rgba(167,139,250,0.07)' },
+  ph:            { line:'#F5A623', bg:'rgba(245,166,35,0.07)' },
+};
+
+function cambiarMetrica(m, btn) {
+  metricaActual = m;
+  document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  actualizarChart();
+}
+
+function actualizarChart() {
+  if (!chartInstance || !historial.length) return;
+  const labels = historial.map(r => r.fecha ? r.fecha.substr(11,5) : '');
+  const data   = historial.map(r => r[metricaActual]);
+  const c      = COLORES[metricaActual];
+  chartInstance.data.labels                            = labels;
+  chartInstance.data.datasets[0].data                 = data;
+  chartInstance.data.datasets[0].borderColor          = c.line;
+  chartInstance.data.datasets[0].backgroundColor      = c.bg;
+  chartInstance.data.datasets[0].pointBackgroundColor = c.line;
+  chartInstance.update();
+}
+
+// ===================================================
+//   DEVICES
+// ===================================================
+async function cargarDevices() {
+  try {
+    const res  = await fetch(`${API}/api/devices`);
+    const devs = await res.json();
+    const sel  = document.getElementById('device-select');
+    sel.innerHTML = '';
+    if (!devs.length) { sel.innerHTML = '<option>Sin dispositivos</option>'; return; }
+    devs.forEach(d => {
+      const o = document.createElement('option');
+      o.value = d.id; o.text = d.name;
+      sel.appendChild(o);
+    });
+    deviceId = devs[0].id;
+    actualizarInfoDevice(devs[0]);
+    cargarDatos();
+  } catch(e) { mostrarToast('Error cargando dispositivos'); }
+}
+
+function cambiarDevice(id) { deviceId = id; cargarDatos(); }
+
+function actualizarInfoDevice(d) {
+  document.getElementById('info-nombre').textContent    = d.name        || '—';
+  document.getElementById('info-ubicacion').textContent = d.ubicacion   || '—';
+  document.getElementById('info-mac').textContent       = d.mac_address || '—';
+  const el = document.getElementById('info-activo');
+  el.textContent = d.activo ? 'Activo ●' : 'Inactivo ○';
+  el.style.color = d.activo ? 'var(--verde)' : 'var(--rojo)';
+}
+
+// ===================================================
+//   DATOS
+// ===================================================
+async function cargarDatos() {
+  if (!deviceId) return;
+  try {
+    const resL = await fetch(`${API}/api/readings/latest?device_id=${deviceId}`);
+    if (resL.ok) actualizarMetricas(await resL.json());
+
+    const resH = await fetch(`${API}/api/readings?device_id=${deviceId}&limit=20`);
+    if (resH.ok) { historial = await resH.json(); actualizarChart(); }
+
+    const resA = await fetch(`${API}/api/alerts?device_id=${deviceId}`);
+    if (resA.ok) renderAlertas((await resA.json()).slice(0,5));
+  } catch(e) { mostrarToast('Error cargando datos'); }
+}
+
+function actualizarMetricas(r) {
+  document.getElementById('val-temp').innerHTML = `${r.temperatura}<span class="metric-unit">°C</span>`;
+  document.getElementById('val-turb').innerHTML = `${r.turbidez}<span class="metric-unit">NTU</span>`;
+  document.getElementById('val-cond').innerHTML = `${r.conductividad}<span class="metric-unit">CM</span>`;
+  document.getElementById('val-ph').innerHTML   = `${parseFloat(r.ph).toFixed(1)}<span class="metric-unit">pH</span>`;
+
+  setBar('bar-temp', r.temperatura, 0, 80);
+  setBar('bar-turb', r.turbidez,    0, 1023);
+  setBar('bar-cond', r.conductividad, 0, 1023);
+  setBar('bar-ph',   r.ph,          0, 14);
+
+  setRango('dot-temp','rango-temp', r.temperatura,  10,  60, 'Normal',  'Baja',   'Alta');
+  setRango('dot-turb','rango-turb', r.turbidez,      0, 300, 'Baja',    null,     'Alta');
+  setRango('dot-cond','rango-cond', r.conductividad, 0, 300, 'Estable', null,     'Alta');
+  setRango('dot-ph',  'rango-ph',   r.ph,          6.5, 8.5, 'Neutro', 'Ácido',  'Básico');
+
+  const card = document.getElementById('estado-card');
+  const icon = document.getElementById('nivel-icon');
+  const est  = (r.estado||'').toUpperCase();
+  card.className = 'estado-card';
+
+  if      (est.includes('PELIGRO') || est.includes('ADVERTENCIA')) { card.classList.add('rojo');    icon.textContent='⚠️'; }
+  else if (est.includes('PRECAUCION') || est.includes('REVISAR'))  { card.classList.add('amarillo'); icon.textContent='⚡'; }
+  else                                                              { card.classList.add('verde');   icon.textContent='💧'; }
+
+  document.getElementById('estado-texto').textContent = r.estado || '—';
+  if (r.fecha) {
+    const f = new Date(r.fecha);
+    document.getElementById('estado-hora').textContent =
+      `Última lectura: ${f.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})}`;
+  }
+}
+
+function setBar(id, val, min, max) {
+  document.getElementById(id).style.width =
+    Math.min(100, Math.max(0, ((val-min)/(max-min))*100)) + '%';
+}
+
+function setRango(dId, tId, val, min, max, normal, bajo, alto) {
+  const dot = document.getElementById(dId);
+  const txt = document.getElementById(tId);
+  if (bajo && val < min) { dot.style.background='var(--amarillo)'; txt.textContent=bajo; }
+  else if (val > max)    { dot.style.background='var(--rojo)';     txt.textContent=alto; }
+  else                   { dot.style.background='var(--verde)';    txt.textContent=normal; }
+}
+
+function renderAlertas(alertas) {
+  const list = document.getElementById('alert-list');
+  if (!alertas.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px">Sin alertas recientes</div>';
+    return;
+  }
+  list.innerHTML = alertas.map(a => {
+    const nivel = (a.nivel_alerta||'').toLowerCase();
+    const hora  = a.fecha ? new Date(a.fecha).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="alert-item">
+      <div class="alert-dot ${nivel}"></div>
+      <div class="alert-info">
+        <div class="alert-msg">${a.mensaje_estado||nivel.toUpperCase()}</div>
+        <div class="alert-hora">${hora}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===================================================
+//   COMANDOS
+// ===================================================
+async function enviarComando(cmd) {
+  if (!deviceId) { mostrarToast('Selecciona un dispositivo'); return; }
+  try {
+    const res  = await fetch(`${API}/api/commands/create`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ device_id: deviceId, command: cmd }),
+    });
+    const data = await res.json();
+    mostrarToast(data.ok ? `✓ Comando enviado: ${cmd}` : 'Error enviando comando');
+  } catch(e) { mostrarToast('Error de conexión'); }
+}
+
+function sincronizar() {
+  const btn = document.getElementById('sync-btn');
+  btn.innerHTML = '⟳ <span class="loader"></span>';
+  btn.disabled  = true;
+  cargarDatos().finally(() => {
+    setTimeout(() => {
+      btn.innerHTML = '⟳ Sincronizar';
+      btn.disabled  = false;
+      mostrarToast('✓ Datos actualizados');
+    }, 800);
+  });
+}
+
+function mostrarToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+setInterval(() => { if (sessionStorage.getItem('usuario')) cargarDatos(); }, 10000);
+</script>
+</body>
+</html>

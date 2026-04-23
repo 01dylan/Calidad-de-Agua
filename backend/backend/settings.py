@@ -121,3 +121,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+CORS_ALLOW_ALL_ORIGINS = True   # solo para desarrollo
+
+# Corregir TEMPLATES para que encuentre los HTML
+TEMPLATES[0]['DIRS'] = [BASE_DIR / 'api' / 'templates']
+
+# Agregar corsheaders a INSTALLED_APPS
+INSTALLED_APPS += ['corsheaders']
+
+# Agregar corsheaders a MIDDLEWARE (al inicio)
+MIDDLEWARE.insert(1, 'corsheaders.middleware.CorsMiddleware')
