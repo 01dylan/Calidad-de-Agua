@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Gestión — Calidad de Agua</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde:    #00C896;
+    --amarillo: #F5A623;
+    --rojo:     #E84040;
+    --azul:     #1A6CF6;
+    --fondo:    #0A0E1A;
+    --card:     #111827;
+    --card2:    #1C2333;
+    --borde:    #1E2D45;
+    --texto:    #E8EDF5;
+    --muted:    #5A6A82;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    position: fixed; left:0; top:0; bottom:0;
+    width: 220px; background: var(--card);
+    border-right: 1px solid var(--borde);
+    display: flex; flex-direction: column;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--borde);
+  }
+
+  .logo-dot {
+    width:10px; height:10px; border-radius:50%;
+    background:var(--verde); box-shadow:0 0 8px var(--verde);
+    display:inline-block; margin-right:8px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:.6;transform:scale(1.3)}
+  }
+
+  .logo-txt {
+    font-family:'Space Mono',monospace;
+    font-size:11px; letter-spacing:2px;
+    text-transform:uppercase;
+  }
+
+  .logo-sub { font-size:10px; color:var(--muted); margin-top:2px; }
+
+  .nav { padding:1rem 0; flex:1; }
+
+  .nav-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 1.5rem; font-size:13px;
+    cursor:pointer; transition:all .2s;
+    border-left:2px solid transparent;
+    color:var(--muted);
+  }
+
+  .nav-item:hover { color:var(--texto); background:var(--card2); }
+
+  .nav-item.active {
+    color:var(--verde); border-left-color:var(--verde);
+    background:rgba(0,200,150,0.06);
+  }
+
+  .nav-icon { font-size:16px; width:20px; text-align:center; }
+
+  /* ===== MAIN ===== */
+  .main {
+    margin-left:220px; min-height:100vh;
+    padding:2rem;
+  }
+
+  /* ===== HEADER ===== */
+  .page-header {
+    display:flex; align-items:center;
+    justify-content:space-between;
+    margin-bottom:1.5rem;
+  }
+
+  .page-title {
+    font-size:1.4rem; font-weight:600;
+  }
+
+  .page-sub { font-size:13px; color:var(--muted); margin-top:2px; }
+
+  /* ===== BOTONES ===== */
+  .btn {
+    padding:8px 16px; border-radius:8px;
+    border:none; font-family:'DM Sans',sans-serif;
+    font-size:13px; cursor:pointer; transition:all .2s;
+    display:inline-flex; align-items:center; gap:6px;
+  }
+
+  .btn-primary { background:var(--azul); color:#fff; }
+  .btn-primary:hover { opacity:.85; }
+  .btn-success { background:rgba(0,200,150,.15); color:var(--verde); border:1px solid rgba(0,200,150,.3); }
+  .btn-danger  { background:rgba(232,64,64,.15);  color:var(--rojo);  border:1px solid rgba(232,64,64,.3); }
+  .btn-warning { background:rgba(245,166,35,.15); color:var(--amarillo); border:1px solid rgba(245,166,35,.3); }
+  .btn-ghost   { background:transparent; color:var(--muted); border:1px solid var(--borde); }
+  .btn-ghost:hover { color:var(--texto); border-color:rgba(255,255,255,.15); }
+
+  /* ===== TABLA ===== */
+  .table-card {
+    background:var(--card); border:1px solid var(--borde);
+    border-radius:14px; overflow:hidden;
+    margin-bottom:1.5rem;
+  }
+
+  .table-header {
+    padding:1.2rem 1.5rem;
+    border-bottom:1px solid var(--borde);
+    display:flex; align-items:center;
+    justify-content:space-between;
+  }
+
+  .table-title {
+    font-size:12px; font-family:'Space Mono',monospace;
+    letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  table { width:100%; border-collapse:collapse; }
+
+  th {
+    padding:10px 1.5rem; text-align:left;
+    font-size:11px; font-family:'Space Mono',monospace;
+    letter-spacing:1px; text-transform:uppercase;
+    color:var(--muted); border-bottom:1px solid var(--borde);
+    background:var(--card2);
+  }
+
+  td {
+    padding:12px 1.5rem; font-size:13px;
+    border-bottom:1px solid rgba(30,45,69,.5);
+  }
+
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:rgba(255,255,255,.02); }
+
+  .badge {
+    display:inline-block; padding:3px 10px;
+    border-radius:20px; font-size:11px; font-weight:500;
+  }
+
+  .badge-verde    { background:rgba(0,200,150,.15);  color:var(--verde); }
+  .badge-amarillo { background:rgba(245,166,35,.15); color:var(--amarillo); }
+  .badge-rojo     { background:rgba(232,64,64,.15);  color:var(--rojo); }
+  .badge-azul     { background:rgba(26,108,246,.15); color:#6BA4FF; }
+  .badge-gray     { background:rgba(90,106,130,.15); color:var(--muted); }
+
+  .acciones { display:flex; gap:6px; }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    position:fixed; inset:0; z-index:500;
+    background:rgba(0,0,0,.7);
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .3s;
+  }
+
+  .modal-overlay.visible { opacity:1; pointer-events:all; }
+
+  .modal {
+    background:var(--card); border:1px solid var(--borde);
+    border-radius:16px; width:100%; max-width:520px;
+    max-height:90vh; overflow-y:auto;
+    transform:scale(.95); transition:transform .3s;
+    position:relative;
+  }
+
+  .modal-overlay.visible .modal { transform:scale(1); }
+
+  .modal-header {
+    padding:1.5rem; border-bottom:1px solid var(--borde);
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; background:var(--card); z-index:1;
+  }
+
+  .modal-title { font-size:16px; font-weight:600; }
+
+  .modal-close {
+    background:none; border:none; color:var(--muted);
+    font-size:20px; cursor:pointer; padding:4px 8px;
+    border-radius:6px; transition:all .2s;
+  }
+  .modal-close:hover { color:var(--texto); background:var(--card2); }
+
+  .modal-body { padding:1.5rem; }
+
+  .modal-footer {
+    padding:1rem 1.5rem; border-top:1px solid var(--borde);
+    display:flex; gap:8px; justify-content:flex-end;
+  }
+
+  /* ===== FORMULARIO ===== */
+  .form-group { margin-bottom:1rem; }
+
+  .form-label {
+    display:block; font-size:11px;
+    font-family:'Space Mono',monospace;
+    letter-spacing:1px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:6px;
+  }
+
+  .form-input, .form-select {
+    width:100%; padding:10px 14px;
+    background:var(--card2); border:1px solid var(--borde);
+    border-radius:8px; color:var(--texto);
+    font-family:'DM Sans',sans-serif; font-size:14px;
+    outline:none; transition:border-color .2s;
+  }
+
+  .form-input:focus, .form-select:focus {
+    border-color:rgba(26,108,246,.6);
+  }
+
+  .form-select option { background:var(--card2); }
+
+  .form-row {
+    display:grid; grid-template-columns:1fr 1fr; gap:1rem;
+  }
+
+  .form-section {
+    font-size:11px; font-family:'Space Mono',monospace;
+    letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); margin:1.2rem 0 .8rem;
+    padding-bottom:.5rem; border-bottom:1px solid var(--borde);
+  }
+
+  /* ===== STATS ===== */
+  .stats-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:1rem; margin-bottom:1.5rem;
+  }
+
+  .stat-card {
+    background:var(--card); border:1px solid var(--borde);
+    border-radius:12px; padding:1.2rem;
+  }
+
+  .stat-label {
+    font-size:11px; font-family:'Space Mono',monospace;
+    letter-spacing:1px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:6px;
+  }
+
+  .stat-valor { font-size:1.8rem; font-weight:700; font-family:'Space Mono',monospace; }
+  .stat-card.s-verde  .stat-valor { color:var(--verde); }
+  .stat-card.s-azul   .stat-valor { color:#6BA4FF; }
+  .stat-card.s-naranja .stat-valor { color:var(--amarillo); }
+  .stat-card.s-rojo   .stat-valor { color:var(--rojo); }
+
+  /* ===== EMPTY ===== */
+  .empty {
+    text-align:center; padding:3rem;
+    color:var(--muted); font-size:13px;
+  }
+
+  .empty-icon { font-size:2rem; margin-bottom:.5rem; }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position:fixed; bottom:24px; right:24px;
+    padding:12px 20px; border-radius:10px;
+    font-size:13px; z-index:9999;
+    opacity:0; transform:translateY(10px);
+    transition:all .3s; pointer-events:none;
+    border:1px solid var(--borde);
+  }
+
+  #toast.show { opacity:1; transform:translateY(0); }
+  #toast.ok   { background:#0d2e1f; border-color:rgba(0,200,150,.4); color:var(--verde); }
+  #toast.err  { background:#2e0d0d; border-color:rgba(232,64,64,.4); color:var(--rojo); }
+
+  /* ===== PÁGINA ===== */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ===== LOADER ===== */
+  .loader {
+    display:inline-block; width:14px; height:14px;
+    border:2px solid var(--borde); border-top-color:var(--azul);
+    border-radius:50%; animation:spin .8s linear infinite;
+    vertical-align:middle;
+  }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:768px){
+    .sidebar{ width:60px; }
+    .sidebar .logo-txt, .sidebar .logo-sub, .nav-item span { display:none; }
+    .main { margin-left:60px; padding:1rem; }
+    .form-row { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-dot"></span>
+    <span class="logo-txt">Agua IoT</span>
+    <div class="logo-sub">Sistema de gestión</div>
+  </div>
+  <nav class="nav">
+ <div class="nav-item active" onclick="irA('dispositivos', this)">
+      <span class="nav-icon">📡</span><span>Dispositivos</span>
+    </div>
+    <div class="nav-item" onclick="irA('lecturas', this)">
+      <span class="nav-icon">📊</span><span>Lecturas</span>
+    </div>
+    <div class="nav-item" onclick="irA('alertas', this)">
+      <span class="nav-icon">🔔</span><span>Alertas</span>
+    </div>
+    <div class="nav-item" onclick="irA('umbrales', this)">
+      <span class="nav-icon">⚙️</span><span>Umbrales</span>
+    </div>
+    <div class="nav-item" onclick="irA('nueva-lectura', this)">
+      <span class="nav-icon">➕</span><span>Nueva lectura</span>
+    </div>
+    <div class="nav-item" onclick="window.open('/','_blank')">
+      <span class="nav-icon">🖥️</span><span>Dashboard</span>
+    </div>
+  </nav>
+</div>
+<!-- ===== MAIN ===== -->
+<div class="main">
+
+  <!-- ===== PÁGINA: DISPOSITIVOS ===== -->
+  <div class="page active" id="page-dispositivos">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dispositivos</div>
+        <div class="page-sub">Gestiona los ESP32 conectados al sistema</div>
+      </div>
+      <button class="btn btn-primary" onclick="abrirModalDevice()">+ Nuevo dispositivo</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card s-azul">
+        <div class="stat-label">Total</div>
+        <div class="stat-valor" id="stat-total">—</div>
+      </div>
+      <div class="stat-card s-verde">
+        <div class="stat-label">Activos</div>
+        <div class="stat-valor" id="stat-activos">—</div>
+      </div>
+      <div class="stat-card s-rojo">
+        <div class="stat-label">Inactivos</div>
+        <div class="stat-valor" id="stat-inactivos">—</div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Lista de dispositivos</div>
+        <button class="btn btn-ghost" onclick="cargarDevices()">↻ Actualizar</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Nombre</th><th>Ubicación</th>
+            <th>MAC</th><th>Estado</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-devices">
+          <tr><td colspan="6"><div class="empty"><div class="loader"></div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== PÁGINA: LECTURAS ===== -->
+  <div class="page" id="page-lecturas">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Lecturas</div>
+        <div class="page-sub">Historial de mediciones de los sensores</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select class="form-select" style="width:180px" id="filtro-device" onchange="cargarReadings()">
+          <option value="">Todos los dispositivos</option>
+        </select>
+        <button class="btn btn-ghost" onclick="cargarReadings()">↻ Actualizar</button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Últimas lecturas</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Dispositivo</th><th>Temp</th>
+            <th>Turbidez</th><th>Conductividad</th><th>pH</th>
+            <th>Estado</th><th>Fecha</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-readings">
+          <tr><td colspan="9"><div class="empty"><div class="loader"></div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== PÁGINA: ALERTAS ===== -->
+  <div class="page" id="page-alertas">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Alertas</div>
+        <div class="page-sub">Registro de alertas generadas automáticamente</div>
+      </div>
+      <button class="btn btn-ghost" onclick="cargarAlertas()">↻ Actualizar</button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <div class="table-title">Historial de alertas</div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Dispositivo</th><th>Nivel</th>
+            <th>Estado</th><th>Detalle</th><th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-alertas">
+          <tr><td colspan="6"><div class="empty"><div class="loader"></div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== PÁGINA: UMBRALES ===== -->
+  <div class="page" id="page-umbrales">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Umbrales</div>
+        <div class="page-sub">Configura los límites de alerta por dispositivo</div>
+      </div>
+      <select class="form-select" style="width:200px" id="umbral-device" onchange="cargarUmbral()">
+        <option value="">Selecciona dispositivo</option>
+      </select>
+    </div>
+
+    <div class="table-card" id="umbral-form-card" style="display:none">
+      <div class="table-header">
+        <div class="table-title">Configurar umbrales</div>
+        <button class="btn btn-primary" onclick="guardarUmbral()">💾 Guardar cambios</button>
+      </div>
+      <div style="padding:1.5rem">
+        <div class="form-section">Temperatura</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Máximo peligro (°C)</label>
+            <input class="form-input" type="number" id="u-temp-max" step="0.1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mínimo precaución (°C)</label>
+            <input class="form-input" type="number" id="u-temp-min" step="0.1">
+          </div>
+        </div>
+
+        <div class="form-section">Turbidez</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Peligro</label>
+            <input class="form-input" type="number" id="u-turb-peligro">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Precaución</label>
+            <input class="form-input" type="number" id="u-turb-precaucion">
+          </div>
+        </div>
+
+        <div class="form-section">Conductividad</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Peligro</label>
+            <input class="form-input" type="number" id="u-cond-peligro">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Precaución</label>
+            <input class="form-input" type="number" id="u-cond-precaucion">
+          </div>
+        </div>
+
+        <div class="form-section">pH</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Mínimo peligro</label>
+            <input class="form-input" type="number" id="u-ph-min-peligro" step="0.1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Máximo peligro</label>
+            <input class="form-input" type="number" id="u-ph-max-peligro" step="0.1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Mínimo precaución</label>
+            <input class="form-input" type="number" id="u-ph-min-precaucion" step="0.1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Máximo precaución</label>
+            <input class="form-input" type="number" id="u-ph-max-precaucion" step="0.1">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="umbral-empty" class="empty" style="margin-top:3rem">
+      <div class="empty-icon">⚙️</div>
+      Selecciona un dispositivo para ver sus umbrales
+    </div>
+  </div>
+
+  <!-- ===== PÁGINA: NUEVA LECTURA ===== -->
+  <div class="page" id="page-nueva-lectura">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Nueva lectura</div>
+        <div class="page-sub">Ingresa manualmente una medición</div>
+      </div>
+    </div>
+
+    <div class="table-card" style="max-width:600px">
+      <div class="table-header">
+        <div class="table-title">Formulario de lectura</div>
+      </div>
+      <div style="padding:1.5rem">
+        <div class="form-group">
+          <label class="form-label">Dispositivo</label>
+          <select class="form-select" id="nl-device">
+            <option value="">Selecciona dispositivo</option>
+          </select>
+        </div>
+
+        <div class="form-section">Valores del sensor</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Temperatura (°C)</label>
+            <input class="form-input" type="number" id="nl-temp" step="0.1" placeholder="25.0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">pH</label>
+            <input class="form-input" type="number" id="nl-ph" step="0.01" placeholder="7.0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Turbidez</label>
+            <input class="form-input" type="number" id="nl-turb" placeholder="80">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Conductividad</label>
+            <input class="form-input" type="number" id="nl-cond" placeholder="250">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;padding:12px;margin-top:.5rem"
+                onclick="guardarLectura()">
+          💾 Guardar lectura
+        </button>
+
+        <div id="nl-resultado" style="margin-top:1rem;display:none">
+          <div style="padding:1rem;border-radius:8px;text-align:center;font-weight:600"
+               id="nl-resultado-inner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== MODAL DISPOSITIVO ===== -->
+<div class="modal-overlay" id="modal-device">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-device-title">Nuevo dispositivo</div>
+      <button class="modal-close" onclick="cerrarModal('modal-device')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="md-id">
+      <div class="form-group">
+        <label class="form-label">Nombre del dispositivo</label>
+        <input class="form-input" id="md-name" placeholder="ESP32-Agua-01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ubicación</label>
+        <input class="form-input" id="md-ubicacion" placeholder="Planta principal">
+      </div>
+      <div class="form-group">
+        <label class="form-label">MAC Address</label>
+        <input class="form-input" id="md-mac" placeholder="A4:CF:12:34:56:78">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select class="form-select" id="md-activo">
+          <option value="true">Activo</option>
+          <option value="false">Inactivo</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-device')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarDevice()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+const API = '';
+let devices = [];
+let editandoDeviceId = null;
+
+// ===================================================
+//   NAVEGACIÓN
+// ===================================================
+function irA(pagina, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + pagina).classList.add('active');
+  el.classList.add('active');
+
+  if (pagina === 'dispositivos')  cargarDevices();
+  if (pagina === 'lecturas')      { cargarDevices(); cargarReadings(); }
+  if (pagina === 'alertas')       cargarAlertas();
+  if (pagina === 'umbrales')      cargarDevicesSelect();
+  if (pagina === 'nueva-lectura') cargarDevicesSelect();
+}
+// ===================================================
+//   DEVICES
+// ===================================================
+async function cargarDevices() {
+  try {
+    const res  = await fetch(`${API}/api/devices`);
+    devices    = await res.json();
+
+    const total    = devices.length;
+    const activos  = devices.filter(d => d.activo).length;
+    const inactivos= total - activos;
+
+    document.getElementById('stat-total').textContent    = total;
+    document.getElementById('stat-activos').textContent  = activos;
+    document.getElementById('stat-inactivos').textContent= inactivos;
+
+    const tbody = document.getElementById('tabla-devices');
+    if (!devices.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">📡</div>No hay dispositivos registrados</div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = devices.map(d => `
+      <tr>
+        <td><span style="color:var(--muted);font-family:'Space Mono',monospace">#${d.id}</span></td>
+        <td><strong>${d.name}</strong></td>
+        <td>${d.ubicacion || '—'}</td>
+        <td><span style="font-family:'Space Mono',monospace;font-size:11px">${d.mac_address || '—'}</span></td>
+        <td><span class="badge ${d.activo ? 'badge-verde' : 'badge-gray'}">${d.activo ? 'Activo' : 'Inactivo'}</span></td>
+        <td>
+          <div class="acciones">
+            <button class="btn btn-warning" onclick="editarDevice(${d.id})">✏️ Editar</button>
+            <button class="btn btn-danger"  onclick="borrarDevice(${d.id}, '${d.name}')">🗑️ Borrar</button>
+          </div>
+        </td>
+      </tr>`).join('');
+
+  } catch(e) { toast('Error cargando dispositivos', 'err'); }
+}
+
+function abrirModalDevice() {
+  editandoDeviceId = null;
+  document.getElementById('modal-device-title').textContent = 'Nuevo dispositivo';
+  document.getElementById('md-id').value        = '';
+  document.getElementById('md-name').value      = '';
+  document.getElementById('md-ubicacion').value = '';
+  document.getElementById('md-mac').value       = '';
+  document.getElementById('md-activo').value    = 'true';
+  abrirModal('modal-device');
+}
+
+function editarDevice(id) {
+  const d = devices.find(x => x.id === id);
+  if (!d) return;
+  editandoDeviceId = id;
+  document.getElementById('modal-device-title').textContent = 'Editar dispositivo';
+  document.getElementById('md-id').value        = d.id;
+  document.getElementById('md-name').value      = d.name;
+  document.getElementById('md-ubicacion').value = d.ubicacion || '';
+  document.getElementById('md-mac').value       = d.mac_address || '';
+  document.getElementById('md-activo').value    = d.activo ? 'true' : 'false';
+  abrirModal('modal-device');
+}
+
+async function guardarDevice() {
+  const body = {
+    name:        document.getElementById('md-name').value.trim(),
+    ubicacion:   document.getElementById('md-ubicacion').value.trim(),
+    mac_address: document.getElementById('md-mac').value.trim(),
+    activo:      document.getElementById('md-activo').value === 'true',
+  };
+
+  if (!body.name) { toast('El nombre es obligatorio', 'err'); return; }
+
+  try {
+    let res;
+    if (editandoDeviceId) {
+      res = await fetch(`${API}/api/devices/${editandoDeviceId}/update`, {
+        method: 'PUT', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(body),
+      });
+    } else {
+      res = await fetch(`${API}/api/devices/create`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(body),
+      });
+    }
+    const data = await res.json();
+    if (data.ok) {
+      cerrarModal('modal-device');
+      cargarDevices();
+      toast(editandoDeviceId ? '✓ Dispositivo actualizado' : '✓ Dispositivo creado', 'ok');
+    } else {
+      toast(data.error || 'Error guardando', 'err');
+    }
+  } catch(e) { toast('Error de conexión', 'err'); }
+}
+
+async function borrarDevice(id, nombre) {
+  if (!confirm(`¿Borrar el dispositivo "${nombre}"? Se eliminarán todas sus lecturas.`)) return;
+  try {
+    const res  = await fetch(`${API}/api/devices/${id}/delete`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) { cargarDevices(); toast('✓ Dispositivo eliminado', 'ok'); }
+    else toast(data.error || 'Error borrando', 'err');
+  } catch(e) { toast('Error de conexión', 'err'); }
+}
+
+// ===================================================
+//   READINGS
+// ===================================================
+async function cargarReadings() {
+  const deviceId = document.getElementById('filtro-device').value;
+  try {
+    let url = `${API}/api/readings?limit=50`;
+    if (deviceId) url += `&device_id=${deviceId}`;
+    const res      = await fetch(url);
+    const readings = await res.json();
+    const tbody    = document.getElementById('tabla-readings');
+
+    if (!readings.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty"><div class="empty-icon">📊</div>Sin lecturas registradas</div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = readings.map(r => {
+      const nivel = r.estado === 'ADVERTENCIA' ? 'badge-rojo' :
+                    r.estado === 'PRECAUCION'  ? 'badge-amarillo' : 'badge-verde';
+      const fecha = r.fecha ? r.fecha.replace('T',' ').substr(0,16) : '—';
+      const dev   = devices.find(d => d.id === r.device_id);
+      return `<tr>
+        <td><span style="color:var(--muted);font-family:'Space Mono',monospace">#${r.id}</span></td>
+        <td>${dev ? dev.name : r.device_id}</td>
+        <td>${r.temperatura}°C</td>
+        <td>${r.turbidez}</td>
+        <td>${r.conductividad}</td>
+        <td>${parseFloat(r.ph).toFixed(1)}</td>
+        <td><span class="badge ${nivel}">${r.estado}</span></td>
+        <td><span style="font-family:'Space Mono',monospace;font-size:11px">${fecha}</span></td>
+        <td>
+          <button class="btn btn-danger" onclick="borrarReading(${r.id})">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+
+  } catch(e) { toast('Error cargando lecturas', 'err'); }
+}
+
+async function borrarReading(id) {
+  if (!confirm('¿Borrar esta lectura?')) return;
+  try {
+    const res  = await fetch(`${API}/api/readings/${id}/delete`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) { cargarReadings(); toast('✓ Lectura eliminada', 'ok'); }
+    else toast(data.error || 'Error borrando', 'err');
+  } catch(e) { toast('Error de conexión', 'err'); }
+}
+
+// ===================================================
+//   ALERTAS
+// ===================================================
+async function cargarAlertas() {
+  try {
+    const res     = await fetch(`${API}/api/alerts`);
+    const alertas = await res.json();
+    const tbody   = document.getElementById('tabla-alertas');
+
+    if (!alertas.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">🔔</div>Sin alertas registradas</div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = alertas.map(a => {
+      const nivel = a.nivel_alerta === 'ROJO'    ? 'badge-rojo' :
+                    a.nivel_alerta === 'AMARILLO' ? 'badge-amarillo' : 'badge-verde';
+      const fecha = a.fecha ? a.fecha.replace('T',' ').substr(0,16) : '—';
+      const dev   = devices.find(d => d.id === a.device_id);
+      return `<tr>
+        <td><span style="color:var(--muted);font-family:'Space Mono',monospace">#${a.id}</span></td>
+        <td>${dev ? dev.name : a.device_id}</td>
+        <td><span class="badge ${nivel}">${a.nivel_alerta}</span></td>
+        <td>${a.mensaje_estado}</td>
+        <td>${a.mensaje_detalle}</td>
+        <td><span style="font-family:'Space Mono',monospace;font-size:11px">${fecha}</span></td>
+      </tr>`;
+    }).join('');
+
+  } catch(e) { toast('Error cargando alertas', 'err'); }
+}
+
+// ===================================================
+//   UMBRALES
+// ===================================================
+async function cargarUmbral() {
+  const deviceId = document.getElementById('umbral-device').value;
+  if (!deviceId) return;
+  try {
+    const res  = await fetch(`${API}/api/thresholds?device_id=${deviceId}`);
+    const data = await res.json();
+    if (data.error) { toast(data.error, 'err'); return; }
+
+    document.getElementById('u-temp-max').value         = data.temp_max_peligro;
+    document.getElementById('u-temp-min').value         = data.temp_min_precaucion;
+    document.getElementById('u-turb-peligro').value     = data.turbidez_peligro;
+    document.getElementById('u-turb-precaucion').value  = data.turbidez_precaucion;
+    document.getElementById('u-cond-peligro').value     = data.conductividad_peligro;
+    document.getElementById('u-cond-precaucion').value  = data.conductividad_precaucion;
+    document.getElementById('u-ph-min-peligro').value   = data.ph_min_peligro;
+    document.getElementById('u-ph-max-peligro').value   = data.ph_max_peligro;
+    document.getElementById('u-ph-min-precaucion').value= data.ph_min_precaucion;
+    document.getElementById('u-ph-max-precaucion').value= data.ph_max_precaucion;
+
+    document.getElementById('umbral-form-card').style.display = 'block';
+    document.getElementById('umbral-empty').style.display     = 'none';
+
+  } catch(e) { toast('Error cargando umbrales', 'err'); }
+}
+
+async function guardarUmbral() {
+  const deviceId = document.getElementById('umbral-device').value;
+  if (!deviceId) return;
+
+  const body = {
+    temp_max_peligro:          parseFloat(document.getElementById('u-temp-max').value),
+    temp_min_precaucion:       parseFloat(document.getElementById('u-temp-min').value),
+    turbidez_peligro:          parseInt(document.getElementById('u-turb-peligro').value),
+    turbidez_precaucion:       parseInt(document.getElementById('u-turb-precaucion').value),
+    conductividad_peligro:     parseInt(document.getElementById('u-cond-peligro').value),
+    conductividad_precaucion:  parseInt(document.getElementById('u-cond-precaucion').value),
+    ph_min_peligro:            parseFloat(document.getElementById('u-ph-min-peligro').value),
+    ph_max_peligro:            parseFloat(document.getElementById('u-ph-max-peligro').value),
+    ph_min_precaucion:         parseFloat(document.getElementById('u-ph-min-precaucion').value),
+    ph_max_precaucion:         parseFloat(document.getElementById('u-ph-max-precaucion').value),
+  };
+
+  try {
+    const res  = await fetch(`${API}/api/thresholds/${deviceId}/update`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.ok) toast('✓ Umbrales guardados', 'ok');
+    else toast(data.error || 'Error guardando', 'err');
+  } catch(e) { toast('Error de conexión', 'err'); }
+}
+
+// ===================================================
+//   NUEVA LECTURA
+// ===================================================
+async function guardarLectura() {
+  const deviceId = document.getElementById('nl-device').value;
+  const temp     = document.getElementById('nl-temp').value;
+  const ph       = document.getElementById('nl-ph').value;
+  const turb     = document.getElementById('nl-turb').value;
+  const cond     = document.getElementById('nl-cond').value;
+
+  if (!deviceId || !temp || !ph || !turb || !cond) {
+    toast('Completa todos los campos', 'err'); return;
+  }
+
+  try {
+    const res  = await fetch(`${API}/api/readings/create`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        device_id:     parseInt(deviceId),
+        temperatura:   parseFloat(temp),
+        turbidez:      parseInt(turb),
+        conductividad: parseInt(cond),
+        ph:            parseFloat(ph),
+      }),
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      const inner = document.getElementById('nl-resultado-inner');
+
+      if (data.nivel === 'ROJO') {
+        inner.style.background = '#2e0d0d';
+        inner.style.color      = '#E84040';
+      } else if (data.nivel === 'AMARILLO') {
+        inner.style.background = '#2e2200';
+        inner.style.color      = '#F5A623';
+      } else {
+        inner.style.background = '#0d2e1f';
+        inner.style.color      = '#00C896';
+      }
+
+      inner.textContent = `✓ Lectura guardada — Estado: ${data.estado}`;
+      document.getElementById('nl-resultado').style.display = 'block';
+      toast('✓ Lectura guardada correctamente', 'ok');
+
+    } else {
+      toast(data.error || 'Error guardando', 'err');
+    }
+
+  } catch(e) { toast('Error de conexión', 'err'); }
+}
+// ===================================================
+//   CARGAR SELECTS DE DISPOSITIVOS
+// ===================================================
+async function cargarDevicesSelect() {
+  try {
+    if (!devices.length) {
+      const res = await fetch(`${API}/api/devices`);
+      devices   = await res.json();
+    }
+
+    ['filtro-device','nl-device','umbral-device'].forEach(id => {
+      const sel = document.getElementById(id);
+      if (!sel) return;
+      const first = sel.options[0];
+      sel.innerHTML = '';
+      sel.appendChild(first);
+      devices.forEach(d => {
+        const o = document.createElement('option');
+        o.value = d.id; o.text = d.name;
+        sel.appendChild(o);
+      });
+    });
+  } catch(e) {}
+}
+
+// ===================================================
+//   MODAL
+// ===================================================
+function abrirModal(id) {
+  document.getElementById(id).classList.add('visible');
+}
+
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target === m) m.classList.remove('visible');
+  });
+});
+
+// ===================================================
+//   TOAST
+// ===================================================
+function toast(msg, tipo='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = `show ${tipo}`;
+  setTimeout(() => t.className = '', 3000);
+}
+
+// ===================================================
+//   INIT
+// ===================================================
+cargarDevices();
+cargarDevicesSelect();
+</script>
+</body>
+</html>
