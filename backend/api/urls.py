@@ -2,35 +2,50 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('crud/', views.crud, name='crud'),
-    # Dashboard
-    path('',                              views.dashboard,          name='dashboard'),
-    path('grafica',                       views.grafica,            name='grafica'),
 
-    # Devices CRUD
-    path('api/devices',                   views.get_devices,        name='get_devices'),
-    path('api/devices/create',            views.create_device,      name='create_device'),
-    path('api/devices/<int:device_id>/update', views.update_device, name='update_device'),
-    path('api/devices/<int:device_id>/delete', views.delete_device, name='delete_device'),
+    path('api/sensores',                      views.get_sensores,      name='get_sensores'),
+    path('api/sensores/create',               views.create_sensor,     name='create_sensor'),
+    path('api/sensores/<int:pk>/delete',      views.delete_sensor,     name='delete_sensor'),
+    
+    # Páginas HTML
+    path('',        views.dashboard, name='dashboard'),
+    path('crud/',   views.crud,      name='crud'),
 
-    # Readings CRUD
-    path('api/readings',                  views.get_readings,       name='get_readings'),
-    path('api/readings/latest',           views.get_latest_reading, name='latest_reading'),
-    path('api/readings/create',           views.create_reading,     name='create_reading'),
-    path('api/readings/<int:reading_id>/delete', views.delete_reading, name='delete_reading'),
+    # Comunidades
+    path('api/comunidades',                        views.get_comunidades,       name='get_comunidades'),
+    path('api/comunidades/create',                 views.create_comunidad,      name='create_comunidad'),
+    path('api/comunidades/<int:pk>/update',        views.update_comunidad,      name='update_comunidad'),
+    path('api/comunidades/<int:pk>/delete',        views.delete_comunidad,      name='delete_comunidad'),
 
-    # Commands
-    path('api/commands',                  views.get_commands,       name='get_commands'),
-    path('api/commands/create',           views.create_command,     name='create_command'),
-    path('api/commands/latest',           views.get_latest_command, name='latest_command'),
+    # Dispositivos
+    path('api/dispositivos',                       views.get_dispositivos,      name='get_dispositivos'),
+    path('api/dispositivos/create',                views.create_dispositivo,    name='create_dispositivo'),
+    path('api/dispositivos/<int:pk>/update',       views.update_dispositivo,    name='update_dispositivo'),
+    path('api/dispositivos/<int:pk>/delete',       views.delete_dispositivo,    name='delete_dispositivo'),
 
-    # Alerts
-    path('api/alerts',                    views.get_alerts,         name='get_alerts'),
+    # Lecturas
+    path('api/lecturas',                           views.get_lecturas,          name='get_lecturas'),
+    path('api/lecturas/latest',                    views.get_latest_lectura,    name='latest_lectura'),
+    path('api/lecturas/create',                    views.create_lectura,        name='create_lectura'),
+    path('api/lecturas/<int:pk>/delete',           views.delete_lectura,        name='delete_lectura'),
 
-    # Thresholds
-    path('api/thresholds',                views.get_threshold,      name='get_threshold'),
-    path('api/thresholds/<int:device_id>/update', views.update_threshold, name='update_threshold'),
+    # Alertas
+    path('api/alertas',                            views.get_alertas,           name='get_alertas'),
+
+    # Umbrales
+    path('api/umbrales',                           views.get_umbral,            name='get_umbral'),
+    path('api/umbrales/<int:dispositivo_id>/update', views.update_umbral,       name='update_umbral'),
+
+    # Comandos
+    path('api/comandos',                           views.get_comandos,          name='get_comandos'),
+    path('api/comandos/create',                    views.create_comando,        name='create_comando'),
+    path('api/comandos/latest',                    views.get_latest_comando,    name='latest_comando'),
+
+    # Usuarios
+    path('api/usuarios',                           views.get_usuarios,          name='get_usuarios'),
+    path('api/usuarios/create',                    views.create_usuario,        name='create_usuario'),
+    path('api/usuarios/<int:pk>/delete',           views.delete_usuario,        name='delete_usuario'),
 
     # Logs
-    path('api/logs/create',               views.create_log,         name='create_log'),
+    path('api/logs/create',                        views.create_log,            name='create_log'),
 ]
