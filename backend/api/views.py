@@ -14,9 +14,8 @@ from .models import (
 import json
 
 
-# =====================================================
 #   PÁGINAS HTML
-# =====================================================
+
 def dashboard(request):
     return render(request, "dashboard.html")
 
@@ -53,9 +52,9 @@ def delete_sensor(request, pk):
         return JsonResponse({"error": "No encontrado"}, status=404)
 
 
-# =====================================================
+
 #   COMUNIDADES
-# =====================================================
+
 def get_comunidades(request):
     data = list(Comunidad.objects.values())
     return JsonResponse(data, safe=False)
@@ -106,9 +105,9 @@ def delete_comunidad(request, pk):
         return JsonResponse({"error": "No encontrado"}, status=404)
 
 
-# =====================================================
+
 #   DISPOSITIVOS
-# =====================================================
+
 def get_dispositivos(request):
     comunidad_id = request.GET.get("comunidad_id")
     qs = Dispositivo.objects.all()
@@ -167,9 +166,9 @@ def delete_dispositivo(request, pk):
         return JsonResponse({"error": "No encontrado"}, status=404)
 
 
-# =====================================================
+
 #   LECTURAS
-# =====================================================
+
 def get_lecturas(request):
     dispositivo_id = request.GET.get("dispositivo_id")
     limit          = int(request.GET.get("limit", 20))
@@ -292,9 +291,9 @@ def delete_lectura(request, pk):
         return JsonResponse({"error": "No encontrado"}, status=404)
 
 
-# =====================================================
+
 #   ALERTAS
-# =====================================================
+
 def get_alertas(request):
     dispositivo_id = request.GET.get("dispositivo_id")
     qs = Alerta.objects.all()
@@ -304,9 +303,9 @@ def get_alertas(request):
     return JsonResponse(data, safe=False)
 
 
-# =====================================================
+
 #   UMBRALES
-# =====================================================
+
 def get_umbral(request):
     dispositivo_id = request.GET.get("dispositivo_id")
     try:
@@ -350,9 +349,9 @@ def update_umbral(request, dispositivo_id):
         return JsonResponse({"error": str(e)}, status=400)
 
 
-# =====================================================
+
 #   COMANDOS
-# =====================================================
+
 def get_comandos(request):
     data = list(ComandoRemoto.objects.values()[:50])
     return JsonResponse(data, safe=False)
@@ -385,9 +384,9 @@ def get_latest_comando(request):
         return JsonResponse({"comando": None})
 
 
-# =====================================================
+
 #   USUARIOS
-# =====================================================
+
 def get_usuarios(request):
     data = list(Usuario.objects.values(
         "id","nombre","apellido","correo","telefono","activo","created_at"
@@ -423,9 +422,9 @@ def delete_usuario(request, pk):
         return JsonResponse({"error": "No encontrado"}, status=404)
 
 
-# =====================================================
+
 #   LOGS
-# =====================================================
+
 @csrf_exempt
 def create_log(request):
     if request.method != "POST":

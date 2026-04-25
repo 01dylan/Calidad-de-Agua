@@ -5,9 +5,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 
-# =====================================================
+
 #   GESTIÓN DE BARRIOS
-# =====================================================
+
 
 class Comunidad(models.Model):
     nombre      = models.CharField(max_length=100)
@@ -43,9 +43,9 @@ class PuntoMonitoreo(models.Model):
         return f"{self.comunidad} — {self.nombre}"
 
 
-# =====================================================
+
 #   GESTIÓN DE USUARIOS
-# =====================================================
+
 
 class Rol(models.Model):
     nombre      = models.CharField(max_length=50, unique=True)
@@ -309,9 +309,9 @@ class Auditoria(models.Model):
         return f"{self.accion} | {self.fecha:%Y-%m-%d %H:%M}"
 
 
-# =====================================================
+
 #   GESTIÓN DE CALIDAD
-# =====================================================
+
 
 class TipoVariable(models.Model):
     nombre      = models.CharField(max_length=50)
