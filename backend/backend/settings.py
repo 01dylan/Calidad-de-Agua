@@ -9,12 +9,14 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
+import pymysql
+pymysql.install_as_MySQLdb()
 
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -25,7 +27,11 @@ SECRET_KEY = 'django-insecure-a6q+r6vjv!wpzd&7v+wyksez$6!l8f5jqr2a!x08fcjohj(^j5
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    ".up.railway.app",
+    "127.0.0.1",
+    "localhost",
+]
 
 
 # Application definition
@@ -79,13 +85,16 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'railway',
-        'USER': 'root',  # 
-        'PASSWORD': 'YWFWmLOsTiFtTUjJZEieoQbzxMlxpqCX',
-        'HOST': 'monorail.proxy.rlwy.net',
-        'PORT': '51356',
+        'USER': 'root',
+        'PASSWORD': 'qMAXpqxMiMBEhUdYUBuBFjPtAFtDSGng',
+        'HOST': 'shortline.proxy.rlwy.net',
+        'PORT': '33930',
+        'OPTIONS': {
+            'connect_timeout': 30,
+            'charset': 'utf8mb4',
+        }
     }
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
@@ -121,3 +130,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+CORS_ALLOW_ALL_ORIGINS = True   # solo para desarrollo
+
+# Corregir TEMPLATES para que encuentre los HTML
+TEMPLATES[0]['DIRS'] = [BASE_DIR / 'api' / 'templates']
+
+# Agregar corsheaders a INSTALLED_APPS
+INSTALLED_APPS += ['corsheaders']
+
+# Agregar corsheaders a MIDDLEWARE (al inicio)
+MIDDLEWARE.insert(1, 'corsheaders.middleware.CorsMiddleware')

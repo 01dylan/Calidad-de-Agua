@@ -1,82 +1,442 @@
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .models import *
-import json
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from .models import (
+    Comunidad, PuntoMonitoreo,
+    Rol, Usuario, UsuarioRol,
+    Actuador, Dispositivo, Sensor,
+    LecturaSensor, EstadoActuador,
+    ComandoRemoto, RespuestaComando,
+    LogConexion, Notificacion, Auditoria,
+    TipoVariable, UmbralCalidad,
+    EstadoCalidadAgua, Alerta,
+)
+import json
 
 
-# DEVICES
+#   PÁGINAS HTML
 
-def get_devices(request):
-    data = list(Device.objects.values())
+def dashboard(request):
+    return render(request, "dashboard.html")
+
+def crud(request):
+    return render(request, "crud.html")
+def get_sensores(request):
+    data = list(Sensor.objects.values())
     return JsonResponse(data, safe=False)
-
-
-# READINGS
 
 @csrf_exempt
-def create_reading(request):
-    if request.method == "POST":
+def create_sensor(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
         data = json.loads(request.body)
-
-        reading = Reading.objects.create(
-            device_id=data["device_id"],
-            temperatura=data["temperatura"],
-            turbidez=data["turbidez"],
-            conductividad=data["conductividad"],
-            ph=data["ph"],
-            estado=data["estado"]
+        obj  = Sensor.objects.create(
+            dispositivo_id = data["dispositivo_id"],
+            nombre         = data["nombre"],
+            tipo           = data["tipo"],
+            unidad         = data.get("unidad", ""),
         )
-
-        return JsonResponse({"ok": True})
-
-def get_readings(request):
-    data = list(Reading.objects.values())
-    return JsonResponse(data, safe=False)
-
-
-# COMMANDS
+        return JsonResponse({"ok": True, "id": obj.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
 @csrf_exempt
-def create_command(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-
-        command = Command.objects.create(
-            device_id=data["device_id"],
-            command=data["command"]
-        )
-
+def delete_sensor(request, pk):
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        Sensor.objects.get(id=pk).delete()
         return JsonResponse({"ok": True})
+    except Sensor.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
 
-def get_commands(request):
-    data = list(Command.objects.values())
+
+
+#   COMUNIDADES
+
+def get_comunidades(request):
+    data = list(Comunidad.objects.values())
     return JsonResponse(data, safe=False)
 
-def get_latest_command(request):
-    command = Command.objects.last()
-    if command:
-        return JsonResponse({"command": command.command})
-    return JsonResponse({})
-def grafica(request):
-    readings = Reading.objects.all().order_by('fecha')
+@csrf_exempt
+def create_comunidad(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        data = json.loads(request.body)
+        obj  = Comunidad.objects.create(
+            nombre      = data["nombre"],
+            descripcion = data.get("descripcion", ""),
+            ubicacion   = data.get("ubicacion", ""),
+            latitud     = data.get("latitud"),
+            longitud    = data.get("longitud"),
+        )
+        return JsonResponse({"ok": True, "id": obj.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
-    labels = []
-    temperaturas = []
-    turbidez = []
-    conductividad = []
+@csrf_exempt
+def update_comunidad(request, pk):
+    if request.method != "PUT":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        obj  = Comunidad.objects.get(id=pk)
+        data = json.loads(request.body)
+        obj.nombre      = data.get("nombre",      obj.nombre)
+        obj.descripcion = data.get("descripcion", obj.descripcion)
+        obj.ubicacion   = data.get("ubicacion",   obj.ubicacion)
+        obj.activo      = data.get("activo",      obj.activo)
+        obj.save()
+        return JsonResponse({"ok": True})
+    except Comunidad.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
 
-    for r in readings:
-        labels.append(r.fecha.strftime("%H:%M"))
-        temperaturas.append(r.temperatura)
-        turbidez.append(r.turbidez)
-        conductividad.append(r.conductividad)
+@csrf_exempt
+def delete_comunidad(request, pk):
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        Comunidad.objects.get(id=pk).delete()
+        return JsonResponse({"ok": True})
+    except Comunidad.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
 
-    context = {
-        "labels": labels,
-        "temperaturas": temperaturas,
-        "turbidez": turbidez,
-        "conductividad": conductividad,
-    }
 
-    return render(request, "grafica.html", context)
+
+#   DISPOSITIVOS
+
+def get_dispositivos(request):
+    comunidad_id = request.GET.get("comunidad_id")
+    qs = Dispositivo.objects.all()
+    if comunidad_id:
+        qs = qs.filter(comunidad_id=comunidad_id)
+    data = list(qs.values())
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def create_dispositivo(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        data = json.loads(request.body)
+        obj  = Dispositivo.objects.create(
+            comunidad_id = data["comunidad_id"],
+            nombre       = data["nombre"],
+            mac_address  = data.get("mac_address", ""),
+            ip_address   = data.get("ip_address",  ""),
+            ubicacion    = data.get("ubicacion",   ""),
+            firmware     = data.get("firmware",    ""),
+        )
+        # Crear umbral por defecto
+        UmbralCalidad.objects.create(dispositivo=obj)
+        return JsonResponse({"ok": True, "id": obj.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def update_dispositivo(request, pk):
+    if request.method != "PUT":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        obj  = Dispositivo.objects.get(id=pk)
+        data = json.loads(request.body)
+        obj.nombre      = data.get("nombre",      obj.nombre)
+        obj.mac_address = data.get("mac_address", obj.mac_address)
+        obj.ip_address  = data.get("ip_address",  obj.ip_address)
+        obj.ubicacion   = data.get("ubicacion",   obj.ubicacion)
+        obj.activo      = data.get("activo",      obj.activo)
+        obj.save()
+        return JsonResponse({"ok": True})
+    except Dispositivo.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def delete_dispositivo(request, pk):
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        Dispositivo.objects.get(id=pk).delete()
+        return JsonResponse({"ok": True})
+    except Dispositivo.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
+
+
+
+#   LECTURAS
+
+def get_lecturas(request):
+    dispositivo_id = request.GET.get("dispositivo_id")
+    limit          = int(request.GET.get("limit", 20))
+    qs             = LecturaSensor.objects.all()
+    if dispositivo_id:
+        qs = qs.filter(dispositivo_id=dispositivo_id)
+    data = list(qs.values()[:limit])
+    return JsonResponse(data, safe=False)
+
+def get_latest_lectura(request):
+    dispositivo_id = request.GET.get("dispositivo_id")
+    try:
+        qs = LecturaSensor.objects.all()
+        if dispositivo_id:
+            qs = qs.filter(dispositivo_id=dispositivo_id)
+        r = qs.latest("fecha")
+        return JsonResponse({
+            "id":            r.id,
+            "dispositivo_id":r.dispositivo_id,
+            "temperatura":   r.temperatura,
+            "turbidez":      r.turbidez,
+            "conductividad": r.conductividad,
+            "ph":            r.ph,
+            "estado":        r.estado,
+            "fecha":         r.fecha.strftime("%Y-%m-%d %H:%M:%S"),
+        })
+    except LecturaSensor.DoesNotExist:
+        return JsonResponse({"error": "Sin lecturas"}, status=404)
+
+@csrf_exempt
+def create_lectura(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        data        = json.loads(request.body)
+        dispositivo = Dispositivo.objects.get(id=data["dispositivo_id"])
+        sensor      = Sensor.objects.filter(dispositivo=dispositivo).first()
+
+        try:
+            th = dispositivo.umbral
+        except UmbralCalidad.DoesNotExist:
+            th = UmbralCalidad(
+                temp_max_peligro=60,    temp_min_precaucion=10,
+                turbidez_peligro=600,   turbidez_precaucion=300,
+                conductividad_peligro=600, conductividad_precaucion=300,
+                ph_min_peligro=4.0,     ph_max_peligro=10.0,
+                ph_min_precaucion=6.0,  ph_max_precaucion=8.5,
+            )
+
+        temp = data["temperatura"]
+        turb = data["turbidez"]
+        cond = data["conductividad"]
+        ph   = data["ph"]
+
+        es_peligro = (
+            temp >= th.temp_max_peligro or turb > th.turbidez_peligro or
+            cond > th.conductividad_peligro or ph < th.ph_min_peligro or
+            ph > th.ph_max_peligro
+        )
+        es_precaucion = (
+            temp < th.temp_min_precaucion or turb > th.turbidez_precaucion or
+            cond > th.conductividad_precaucion or ph < th.ph_min_precaucion or
+            ph > th.ph_max_precaucion
+        )
+
+        if es_peligro:
+            nivel, estado, detalle = "ROJO",     "ADVERTENCIA", "AGUA PELIGROSA"
+        elif es_precaucion:
+            nivel, estado, detalle = "AMARILLO",  "PRECAUCION",  "Tenga cuidado"
+        else:
+            nivel, estado, detalle = "VERDE",    "AGUA APTA",   "Agua es segura"
+
+        lectura = LecturaSensor.objects.create(
+            dispositivo   = dispositivo,
+            sensor        = sensor,
+            temperatura   = temp,
+            turbidez      = turb,
+            conductividad = cond,
+            ph            = ph,
+            estado        = estado,
+        )
+
+        Alerta.objects.create(
+            comunidad       = dispositivo.comunidad,
+            dispositivo     = dispositivo,
+            lectura         = lectura,
+            nivel_alerta    = nivel,
+            mensaje_estado  = estado,
+            mensaje_detalle = detalle,
+        )
+
+        EstadoCalidadAgua.objects.create(
+            dispositivo     = dispositivo,
+            lectura         = lectura,
+            nivel           = nivel,
+            mensaje_estado  = estado,
+            mensaje_detalle = detalle,
+        )
+
+        return JsonResponse({
+            "ok":     True,
+            "id":     lectura.id,
+            "estado": estado,
+            "nivel":  nivel,
+        })
+
+    except Dispositivo.DoesNotExist:
+        return JsonResponse({"error": "Dispositivo no encontrado"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def delete_lectura(request, pk):
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        LecturaSensor.objects.get(id=pk).delete()
+        return JsonResponse({"ok": True})
+    except LecturaSensor.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
+
+
+
+#   ALERTAS
+
+def get_alertas(request):
+    dispositivo_id = request.GET.get("dispositivo_id")
+    qs = Alerta.objects.all()
+    if dispositivo_id:
+        qs = qs.filter(dispositivo_id=dispositivo_id)
+    data = list(qs.values()[:50])
+    return JsonResponse(data, safe=False)
+
+
+
+#   UMBRALES
+
+def get_umbral(request):
+    dispositivo_id = request.GET.get("dispositivo_id")
+    try:
+        th = UmbralCalidad.objects.get(dispositivo_id=dispositivo_id)
+        return JsonResponse({
+            "temp_max_peligro":          th.temp_max_peligro,
+            "temp_min_precaucion":       th.temp_min_precaucion,
+            "turbidez_peligro":          th.turbidez_peligro,
+            "turbidez_precaucion":       th.turbidez_precaucion,
+            "conductividad_peligro":     th.conductividad_peligro,
+            "conductividad_precaucion":  th.conductividad_precaucion,
+            "ph_min_peligro":            th.ph_min_peligro,
+            "ph_max_peligro":            th.ph_max_peligro,
+            "ph_min_precaucion":         th.ph_min_precaucion,
+            "ph_max_precaucion":         th.ph_max_precaucion,
+        })
+    except UmbralCalidad.DoesNotExist:
+        return JsonResponse({"error": "Sin umbrales"}, status=404)
+
+@csrf_exempt
+def update_umbral(request, dispositivo_id):
+    if request.method != "PUT":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        th   = UmbralCalidad.objects.get(dispositivo_id=dispositivo_id)
+        data = json.loads(request.body)
+        for campo in [
+            "temp_max_peligro", "temp_min_precaucion",
+            "turbidez_peligro", "turbidez_precaucion",
+            "conductividad_peligro", "conductividad_precaucion",
+            "ph_min_peligro", "ph_max_peligro",
+            "ph_min_precaucion", "ph_max_precaucion",
+        ]:
+            if campo in data:
+                setattr(th, campo, data[campo])
+        th.save()
+        return JsonResponse({"ok": True})
+    except UmbralCalidad.DoesNotExist:
+        return JsonResponse({"error": "Sin umbrales"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+
+
+#   COMANDOS
+
+def get_comandos(request):
+    data = list(ComandoRemoto.objects.values()[:50])
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def create_comando(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        data = json.loads(request.body)
+        obj  = ComandoRemoto.objects.create(
+            dispositivo_id = data["dispositivo_id"],
+            comando        = data["comando"],
+        )
+        return JsonResponse({"ok": True, "id": obj.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+def get_latest_comando(request):
+    dispositivo_id = request.GET.get("dispositivo_id")
+    try:
+        qs = ComandoRemoto.objects.filter(ejecutado=False)
+        if dispositivo_id:
+            qs = qs.filter(dispositivo_id=dispositivo_id)
+        obj           = qs.latest("fecha")
+        obj.ejecutado = True
+        obj.save()
+        return JsonResponse({"comando": obj.comando, "id": obj.id})
+    except ComandoRemoto.DoesNotExist:
+        return JsonResponse({"comando": None})
+
+
+
+#   USUARIOS
+
+def get_usuarios(request):
+    data = list(Usuario.objects.values(
+        "id","nombre","apellido","correo","telefono","activo","created_at"
+    ))
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def create_usuario(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        data = json.loads(request.body)
+        obj  = Usuario.objects.create(
+            comunidad_id = data.get("comunidad_id"),
+            nombre       = data["nombre"],
+            apellido     = data.get("apellido", ""),
+            correo       = data["correo"],
+            contrasena   = data["contrasena"],
+            telefono     = data.get("telefono", ""),
+        )
+        return JsonResponse({"ok": True, "id": obj.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@csrf_exempt
+def delete_usuario(request, pk):
+    if request.method != "DELETE":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        Usuario.objects.get(id=pk).delete()
+        return JsonResponse({"ok": True})
+    except Usuario.DoesNotExist:
+        return JsonResponse({"error": "No encontrado"}, status=404)
+
+
+
+#   LOGS
+
+@csrf_exempt
+def create_log(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Método no permitido"}, status=405)
+    try:
+        data = json.loads(request.body)
+        obj  = LogConexion.objects.create(
+            dispositivo_id = data["dispositivo_id"],
+            evento         = data["evento"],
+            ip_address     = data.get("ip_address", ""),
+            detalle        = data.get("detalle", ""),
+        )
+        return JsonResponse({"ok": True, "id": obj.id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
